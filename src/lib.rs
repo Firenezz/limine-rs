@@ -502,9 +502,10 @@ make_struct!(
     };
 );
 
-// smp request tag:
+// smp request tag for x86_64:
 #[repr(C)]
 #[derive(Debug)]
+#[cfg(target_arch = "x86_64")]
 pub struct SmpInfo {
     /// ACPI Processor UID as specified by the MADT.
     pub processor_id: u32,
@@ -522,14 +523,54 @@ pub struct SmpInfo {
     pub extra_argument: u64,
 }
 
+// smp request tag for riscv64:
 #[repr(C)]
 #[derive(Debug)]
+#[cfg(target_arch = "riscv64")]
+pub struct SmpInfo {
+    /// ACPI Processor UID as specified by the MADT.
+    pub processor_id: u64,
+    /// Local APIC ID of the processor as specified by the MADT.
+    pub lapic_id: u64,
+    pub reserved: u64,
+    /// An atomic write to this field causes the parked CPU to jump to the
+    /// written address, on a 64KiB (or Stack Size Request size) stack. A pointer
+    /// to the struct [`SmpInfo`] structure of the CPU is passed in RDI. Other
+    /// than that, the CPU state will be the same as described for the bootstrap
+    /// processor. This field is unused for the structure describing the bootstrap
+    /// processor.
+    pub goto_address: extern "C" fn(info: *const SmpInfo) -> !,
+    /// A free for use field.
+    pub extra_argument: u64,
+}
+
+// For x86_64
+#[repr(C)]
+#[derive(Debug)]
+#[cfg(target_arch = "x86_64")]
 pub struct SmpResponse {
     pub revision: u64,
     /// Bit 0: X2APIC has been enabled.
     pub flags: u32,
     /// The Local APIC ID of the bootstrap processor.
     pub bsp_lapic_id: u32,
+    /// How many CPUs are present. It includes the bootstrap processor.
+    pub cpu_count: u64,
+    /// Pointer to an array of `cpu_count` pointers to struct [`SmpInfo`]
+    /// structures.
+    pub cpus: ArrayPtr<SmpInfo>,
+}
+
+// For riscv64
+#[repr(C)]
+#[derive(Debug)]
+#[cfg(target_arch = "riscv64")]
+pub struct SmpResponse {
+    pub revision: u64,
+    /// Bit 0: X2APIC has been enabled.
+    pub flags: u64,
+    /// The Local APIC ID of the bootstrap processor.
+    pub bsp_hartid: u64,
     /// How many CPUs are present. It includes the bootstrap processor.
     pub cpu_count: u64,
     /// Pointer to an array of `cpu_count` pointers to struct [`SmpInfo`]
