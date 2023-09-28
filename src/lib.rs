@@ -531,7 +531,7 @@ pub struct SmpInfo {
     /// ACPI Processor UID as specified by the MADT.
     pub processor_id: u64,
     /// Local APIC ID of the processor as specified by the MADT.
-    pub lapic_id: u64,
+    pub hart_id: u64,
     pub reserved: u64,
     /// An atomic write to this field causes the parked CPU to jump to the
     /// written address, on a 64KiB (or Stack Size Request size) stack. A pointer
